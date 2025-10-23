@@ -26,6 +26,31 @@ if [ -d "$REPO_NAME" ]; then
     cd "$REPO_NAME" || exit 1
     git pull origin "$BRANCH"
 else
+echo "===== STEP 3: Build and Run Docker Container ====="
+
+# Check if Dockerfile exists
+if [ -f Dockerfile ]; then
+    echo "Dockerfile found. Proceeding with build..."
+else
+    echo "Error: Dockerfile not found!"
+    exit 1
+fi
+
+# Build Docker image
+docker build -t myapp .
+
+# Stop and remove any existing container named myapp (idempotent)
+if [ $(docker ps -a -q -f name=myapp) ]; then
+    echo "Stopping existing container..."
+    docker stop myapp
+    docker rm myapp
+fi
+
+# Run the container
+docker run -d --name myapp -p $APP_PORT:8000 myapp
+
+echo "Docker container is running on port $APP_PORT"
+
     echo " Cloning repository..."
     # Clone using PAT for authentication
     git clone https://${PAT}@${GIT_REPO#https://} --branch "$BRANCH"
